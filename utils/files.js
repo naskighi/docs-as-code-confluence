@@ -10,14 +10,15 @@ const readdirSync = (p, a = []) => {
 };
 
 const filesStructure = (root) => {
+  const normalizedRoot = path.normalize(root);
+
   return readdirSync(root)
     .filter((f) => {
       return f.endsWith(".md");
     })
     .map((f) => {
-      let splitted = f.split("/");
-      splitted.shift();
-      return splitted;
+      const relativeToRoot = path.relative(normalizedRoot, path.normalize(f));
+      return relativeToRoot.split(path.sep);
     });
 };
 
