@@ -21814,27 +21814,44 @@ const Confluence = __nccwpck_require__(3099);
 const core = __nccwpck_require__(2186);
 const parser = __nccwpck_require__(4363)
 const path = __nccwpck_require__(1017)
+const fs = __nccwpck_require__(7147);
 
 const filesStructure = __nccwpck_require__(8612);
 const SyncConfluence = __nccwpck_require__(5870);
 const markdownToHtml = __nccwpck_require__(249);
 
-const root = "./" + core.getInput("folder", { required: true }) + "/";
-const spaceKey = core.getInput("space-key", { required: true });
-const rootParentPageId = core.getInput("parent-page-id", { required: true });
+function getInput(name, options = {}) {
+  const envKey = `INPUT_${name.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
+  const envValue = process.env[envKey];
+
+  if (envValue !== undefined && envValue !== "") {
+    return options.trimWhitespace === false ? envValue : envValue.trim();
+  }
+
+  return core.getInput(name, options);
+}
+
+const dryRun = getInput("dry-run") === "true";
+const previewOutputFolder = getInput("preview-output-folder") || "preview-html";
+
+const root = "./" + getInput("folder", { required: true }) + "/";
+const spaceKey = getInput("space-key", { required: !dryRun });
+const rootParentPageId = getInput("parent-page-id", { required: !dryRun });
 
 const config = {
-  username: core.getInput("username", { required: true }),
-  password: core.getInput("password", { required: true }),
-  baseUrl: core.getInput("confluence-base-url", { required: true }),
+  username: getInput("username", { required: !dryRun }),
+  password: getInput("password", { required: !dryRun }),
+  baseUrl: getInput("confluence-base-url", { required: !dryRun }),
 };
 
-const confluenceAPI = new Confluence(config);
-const syncConfluence = new SyncConfluence(
-  confluenceAPI,
-  spaceKey,
-  rootParentPageId
-);
+const confluenceAPI = dryRun ? undefined : new Confluence(config);
+const syncConfluence = dryRun
+  ? undefined
+  : new SyncConfluence(
+      confluenceAPI,
+      spaceKey,
+      rootParentPageId
+    );
 
 const cachedPageIdByTitle = {};
 
@@ -21854,6 +21871,26 @@ async function findOrCreatePage(pageTitle, parentPageId) {
     cachedPageIdByTitle[pageTitle] = pageId;
   }
   return pageId;
+}
+
+function markdownToHtmlAsync(filePath) {
+  return new Promise((resolve, reject) => {
+    markdownToHtml(filePath, (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
+}
+
+async function writePreviewFile(sourcePath, rootPath, htmlContent) {
+  const relativePath = path.relative(rootPath, sourcePath).replace(/\.md$/, ".html");
+  const destinationPath = path.join(previewOutputFolder, relativePath);
+  await fs.promises.mkdir(path.dirname(destinationPath), { recursive: true });
+  await fs.promises.writeFile(destinationPath, htmlContent, { encoding: "utf-8" });
+  console.log("[dry-run] Wrote preview file %s", destinationPath);
 }
 
 async function uploadAttachment(attachmentSource, pageId) {
@@ -21887,11 +21924,16 @@ async function main() {
   if (!files.length) {
     console.log("No markdown files found in %s", root);
   }
+
+  if (dryRun) {
+    console.log("Running in dry-run mode. No content will be sent to Confluence.");
+  }
+
   for (const f of files) {
-    let path = f.join("/");
+    let currentPath = f.join("/");
     let currentParentPageId = rootParentPageId;
     let pathsInRoot = root.split("/");
-    let newRoot= root;       
+    let newRoot= root;
     if(pathsInRoot.length > 2){
       newRoot = "./" + pathsInRoot[1] + "/"
       console.log("Root for action includes subfolder. Assigning root as: " +  newRoot)
@@ -21899,18 +21941,21 @@ async function main() {
     for (const subPath of f) {
       if (subPath.includes(".md")) {
         let pageTitle = subPath.replace(".md", "");
+        let markdownFilePath = newRoot + currentPath;
+        let htmlContent = await markdownToHtmlAsync(markdownFilePath);
+
+        if (dryRun) {
+          await writePreviewFile(markdownFilePath, newRoot, htmlContent);
+          continue;
+        }
+
         let contentPageId = await findOrCreatePage(
           pageTitle,
           currentParentPageId
         );
-        markdownToHtml(newRoot + path,  async (err, data) => {
-          if(err) {
-            console.log(err);
-          }
-          let htmlContent = await handleAttachments(contentPageId, data);
-          syncConfluence.putContent(contentPageId, pageTitle, htmlContent);
-        });
-      } else {
+        htmlContent = await handleAttachments(contentPageId, htmlContent);
+        syncConfluence.putContent(contentPageId, pageTitle, htmlContent);
+      } else if (!dryRun) {
         currentParentPageId = await findOrCreatePage(
           subPath,
           currentParentPageId
