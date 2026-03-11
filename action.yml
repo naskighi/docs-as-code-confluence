@@ -10,19 +10,27 @@ inputs:
     required: true
   username:
     description: "Confluence username or email"
-    required: true
+    required: false
   password:
     description: "Confluence password or API key"
-    required: true
+    required: false
   confluence-base-url:
     description: "Your Confluence url"
-    required: true
+    required: false
   space-key:
     description: "Confluence space key to publish the documentation"
-    required: true
+    required: false
   parent-page-id:
     description: "Page id under which the documentation will be published"
-    required: true
+    required: false
+  dry-run:
+    description: "If true, do not publish to Confluence and generate HTML previews locally"
+    required: false
+    default: "false"
+  preview-output-folder:
+    description: "Output folder used in dry-run mode to store generated HTML files"
+    required: false
+    default: "preview-html"
 runs:
   using: "node20"
   main: "dist/index.js"
