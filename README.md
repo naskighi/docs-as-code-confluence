@@ -10,11 +10,15 @@ the directory structure.
 | Name                  | Description | Required |
 |-----------------------| --- | --- |
 | `folder`              | The folder to sync | true |
-| `username`            | Confluence username or email | true |
-| `password`            | Confluence password or [API token](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/) | true |
-| `confluence-base-url` | Your Confluence URL (with `wiki`). Example: `https://mydomain.atlassian.net/wiki` | true |
-| `space-key`           | Confluence space key to publish the documentation. Located after `spaces` in the URL. `https://mydomain.atlassian.net/wiki/spaces/<<~1234>>`. <br> Or in _Space settings_ > _Space details_ > _Key_. | true |
-| `parent-page-id`      | Page id under which the documentation will be published. Located after `pages` in the URL. `https://mydomain.atlassian.net/wiki/spaces/~1234/pages/<<1234>>/My+Parent+Page` | true |
+| `username`            | Confluence username or email | true* |
+| `password`            | Confluence password or [API token](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/) | true* |
+| `confluence-base-url` | Your Confluence URL (with `wiki`). Example: `https://mydomain.atlassian.net/wiki` | true* |
+| `space-key`           | Confluence space key to publish the documentation. Located after `spaces` in the URL. `https://mydomain.atlassian.net/wiki/spaces/<<~1234>>`. <br> Or in _Space settings_ > _Space details_ > _Key_. | true* |
+| `parent-page-id`      | Page id under which the documentation will be published. Located after `pages` in the URL. `https://mydomain.atlassian.net/wiki/spaces/~1234/pages/<<1234>>/My+Parent+Page` | true* |
+| `dry-run`             | If `true`, do not publish to Confluence and generate local HTML previews instead. | false |
+| `preview-output-folder` | Folder where generated HTML previews are written during `dry-run`. Default: `preview-html`. | false |
+
+\* Required only when `dry-run` is `false`.
 
 ## TODO
 
@@ -55,6 +59,21 @@ jobs:
 ## Example of usage in a repository
 
 [Bhacaz/docs-as-code-confluence-demo](https://github.com/Bhacaz/docs-as-code-confluence-demo)
+
+## Dry-run / Preview mode
+
+You can generate HTML files locally without publishing to Confluence.
+
+```yml
+- name: Preview Docs as HTML
+  uses: Bhacaz/docs-as-code-confluence@v3
+  with:
+    folder: docs
+    dry-run: true
+    preview-output-folder: preview-html
+```
+
+When `dry-run: true`, Confluence credentials and destination inputs are not required.
 
 ## Alternatives
 
