@@ -83,7 +83,7 @@ you can use underscore names (for example `INPUT_DRY_RUN`, `INPUT_SPACE_KEY`).
 PowerShell example:
 
 ```powershell
-$env:INPUT_FOLDER = "docs"
+$env:INPUT_FOLDER = "docs" # avoid trailing slash/backslash
 $env:INPUT_DRY_RUN = "true"
 $env:INPUT_PREVIEW_OUTPUT_FOLDER = "preview-html"
 node index.js
@@ -92,7 +92,7 @@ node index.js
 Publish mode example (PowerShell):
 
 ```powershell
-$env:INPUT_FOLDER = "docs"
+$env:INPUT_FOLDER = "docs" # avoid trailing slash/backslash
 $env:INPUT_DRY_RUN = "false"
 $env:INPUT_USERNAME = "abc@xyz.com"
 $env:INPUT_PASSWORD = "<api-token>"

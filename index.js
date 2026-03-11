@@ -22,7 +22,9 @@ function getInput(name, options = {}) {
 const dryRun = getInput("dry-run") === "true";
 const previewOutputFolder = getInput("preview-output-folder") || "preview-html";
 
-const root = "./" + getInput("folder", { required: true }) + "/";
+const folderInput = getInput("folder", { required: true });
+const normalizedFolder = path.normalize(folderInput.replace(/[\\/]+/g, path.sep));
+const root = path.resolve(normalizedFolder);
 const spaceKey = getInput("space-key", { required: !dryRun });
 const rootParentPageId = getInput("parent-page-id", { required: !dryRun });
 
@@ -82,7 +84,7 @@ async function writePreviewFile(sourcePath, rootPath, htmlContent) {
 }
 
 async function uploadAttachment(attachmentSource, pageId) {
-  attachmentSource = root + attachmentSource;
+  attachmentSource = path.resolve(root, attachmentSource);
   const existingAttachments = await syncConfluence.getAttachments(pageId)
   if (existingAttachments) {
     for (let attachment of existingAttachments) {
@@ -118,22 +120,16 @@ async function main() {
   }
 
   for (const f of files) {
-    let currentPath = f.join("/");
+    let currentPath = path.join(...f);
     let currentParentPageId = rootParentPageId;
-    let pathsInRoot = root.split("/");
-    let newRoot= root;
-    if(pathsInRoot.length > 2){
-      newRoot = "./" + pathsInRoot[1] + "/"
-      console.log("Root for action includes subfolder. Assigning root as: " +  newRoot)
-    }
     for (const subPath of f) {
       if (subPath.includes(".md")) {
         let pageTitle = subPath.replace(".md", "");
-        let markdownFilePath = newRoot + currentPath;
+        let markdownFilePath = path.join(root, currentPath);
         let htmlContent = await markdownToHtmlAsync(markdownFilePath);
 
         if (dryRun) {
-          await writePreviewFile(markdownFilePath, newRoot, htmlContent);
+          await writePreviewFile(markdownFilePath, root, htmlContent);
           continue;
         }
 

@@ -1,9 +1,7 @@
 const fs = require('fs');
-const path = require('path');
 const filesStructure = require('../../utils/files');
 
 jest.mock('fs');
-jest.mock('path');
 
 describe('filesStructure', () => {
   it('returns structure of markdown files in directory and only select .md files', () => {
@@ -20,7 +18,6 @@ describe('filesStructure', () => {
     });
 
     fs.readdirSync.mockReturnValue(mockFiles);
-    path.join.mockImplementation((...args) => args.join('/'));
 
     const result = filesStructure('root');
 
@@ -30,7 +27,6 @@ describe('filesStructure', () => {
   it('returns empty array when directory is empty', () => {
     fs.statSync.mockReturnValue({ isDirectory: () => true });
     fs.readdirSync.mockReturnValue([]);
-    path.join.mockImplementation((...args) => args.join('/'));
 
     const result = filesStructure('root');
 
