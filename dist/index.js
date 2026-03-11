@@ -21820,17 +21820,28 @@ const filesStructure = __nccwpck_require__(8612);
 const SyncConfluence = __nccwpck_require__(5870);
 const markdownToHtml = __nccwpck_require__(249);
 
-const dryRun = core.getInput("dry-run") === "true";
-const previewOutputFolder = core.getInput("preview-output-folder") || "preview-html";
+function getInput(name, options = {}) {
+  const envKey = `INPUT_${name.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
+  const envValue = process.env[envKey];
 
-const root = "./" + core.getInput("folder", { required: true }) + "/";
-const spaceKey = core.getInput("space-key", { required: !dryRun });
-const rootParentPageId = core.getInput("parent-page-id", { required: !dryRun });
+  if (envValue !== undefined && envValue !== "") {
+    return options.trimWhitespace === false ? envValue : envValue.trim();
+  }
+
+  return core.getInput(name, options);
+}
+
+const dryRun = getInput("dry-run") === "true";
+const previewOutputFolder = getInput("preview-output-folder") || "preview-html";
+
+const root = "./" + getInput("folder", { required: true }) + "/";
+const spaceKey = getInput("space-key", { required: !dryRun });
+const rootParentPageId = getInput("parent-page-id", { required: !dryRun });
 
 const config = {
-  username: core.getInput("username", { required: !dryRun }),
-  password: core.getInput("password", { required: !dryRun }),
-  baseUrl: core.getInput("confluence-base-url", { required: !dryRun }),
+  username: getInput("username", { required: !dryRun }),
+  password: getInput("password", { required: !dryRun }),
+  baseUrl: getInput("confluence-base-url", { required: !dryRun }),
 };
 
 const confluenceAPI = dryRun ? undefined : new Confluence(config);

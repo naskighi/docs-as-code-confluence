@@ -75,6 +75,33 @@ You can generate HTML files locally without publishing to Confluence.
 
 When `dry-run: true`, Confluence credentials and destination inputs are not required.
 
+## Run locally (without GitHub Actions)
+
+`@actions/core` reads inputs from environment variables named `INPUT_<NAME>`. For local execution,
+you can use underscore names (for example `INPUT_DRY_RUN`, `INPUT_SPACE_KEY`).
+
+PowerShell example:
+
+```powershell
+$env:INPUT_FOLDER = "docs"
+$env:INPUT_DRY_RUN = "true"
+$env:INPUT_PREVIEW_OUTPUT_FOLDER = "preview-html"
+node index.js
+```
+
+Publish mode example (PowerShell):
+
+```powershell
+$env:INPUT_FOLDER = "docs"
+$env:INPUT_DRY_RUN = "false"
+$env:INPUT_USERNAME = "abc@xyz.com"
+$env:INPUT_PASSWORD = "<api-token>"
+$env:INPUT_CONFLUENCE_BASE_URL = "https://mydomain.atlassian.net/wiki"
+$env:INPUT_SPACE_KEY = "~1234"
+$env:INPUT_PARENT_PAGE_ID = "123456789"
+node index.js
+```
+
 ## Alternatives
 
 * [markdown-confluence/publish-action](https://github.com/markdown-confluence/publish-action)
